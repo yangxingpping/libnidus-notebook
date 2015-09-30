@@ -389,14 +389,14 @@ static void gen_ip_frag_proc(u_char * data, int len)
 		glibc_syslog_h_workaround(NIDS_WARN_IP, NIDS_WARN_IP_SRR, iph, 0);
 		return;
 	}
-	switch (ip_defrag_stub((struct ip *) data, &iph)) {
-	case IPF_ISF:		//一个分片
+	switch (ip_defrag_stub((struct ip *) data, &iph)) {		//处理一个数据帧，并判断这个帧是否是一个ip数据包分片
+	case IPF_ISF:		//是一个分片，缓存直接返回
 		return;
-	case IPF_NOTF:		//没有分片
+	case IPF_NOTF:		//这是一个没有进行分片的完整的数据帧
 		need_free = 0;
 		iph = (struct ip *) data;
 		break;
-	case IPF_NEW:		//一个新的分片完全到达？
+	case IPF_NEW:		//一个ip分片的所有数据包都到达，处理数据(iph包含完整的ip数据包数据)
 		need_free = 1;
 		break;
 	default:;
@@ -472,7 +472,7 @@ static void gen_ip_proc(u_char * data, int skblen)
 static void init_procs()
 {
 	ip_frag_procs = mknew(struct proc_node);
-	ip_frag_procs->item = gen_ip_frag_proc;
+	ip_frag_procs->item = gen_ip_frag_proc;		//每一个数据帧到达后进入的回调函数
 	ip_frag_procs->next = 0;
 	ip_procs = mknew(struct proc_node);
 	ip_procs->item = gen_ip_proc;
