@@ -48,7 +48,7 @@ csum_partial(const u_char * buff, int len, u_int sum)
 	pushl %ebx
 	movl 20(%esp),%eax	# Function arg: u_int sum
 	movl 16(%esp),%ecx	# Function arg: int len
-        movl 12(%esp),%esi	# Function arg: u_char *buff*/
+		movl 12(%esp),%esi	# Function arg: u_char *buff*/
 
 "	testl $2, %%esi						\n"		
 "	jz 2f							\n"			
@@ -106,9 +106,9 @@ csum_partial(const u_char * buff, int len, u_int sum)
 "6:	addl %%ecx,%%eax					\n"
 "	adcl $0, %%eax						\n"
 "7: 								\n"
-       : "=a"(sum), "=c"(len), "=S"(buff)
-       : "0"(sum), "1"(len), "2"(buff)
-       : "di", "dx" , "cc");
+	   : "=a"(sum), "=c"(len), "=S"(buff)
+	   : "0"(sum), "1"(len), "2"(buff)
+	   : "di", "dx" , "cc");
 
   return (sum);
 }
@@ -201,7 +201,7 @@ inline u_short
 my_tcp_check(struct tcphdr *th, int len, u_int saddr, u_int daddr)
 {
   if (dontchksum(saddr))
-  	return 0;
+	return 0;
   return csum_tcpudp_magic(saddr, daddr, len, IPPROTO_TCP,
 			   csum_partial((u_char *)th, len, 0));
 }
@@ -209,7 +209,7 @@ inline u_short
 my_udp_check(void *u, int len, u_int saddr, u_int daddr)
 {
   if (dontchksum(saddr))
-  	return 0;
+	return 0;
   return csum_tcpudp_magic(saddr, daddr, len, IPPROTO_UDP,
 			   csum_partial((u_char *)u, len, 0));
 }
@@ -240,13 +240,13 @@ ip_check_ext(register u_short *addr, register int len, int addon)
    *  16 bits.
    */
   while (nleft > 1)  {
-    sum += *w++;
-    nleft -= 2;
+	sum += *w++;
+	nleft -= 2;
   }
   /* mop up an odd byte, if necessary */
   if (nleft == 1) {
-    *(u_char *)(&answer) = *(u_char *)w;
-    sum += answer;
+	*(u_char *)(&answer) = *(u_char *)w;
+	sum += answer;
   }  
   /* add back carry outs from top 16 bits to low 16 bits */
   sum = (sum >> 16) + (sum & 0xffff);     /* add hi 16 to low 16 */
@@ -277,7 +277,7 @@ my_tcp_check(struct tcphdr *th, int len, u_int saddr, u_int daddr)
   struct psuedo_hdr hdr;
 
   if (dontchksum(saddr))
-  	return 0;
+	return 0;
   
   hdr.saddr = saddr;
   hdr.daddr = daddr;
@@ -285,7 +285,7 @@ my_tcp_check(struct tcphdr *th, int len, u_int saddr, u_int daddr)
   hdr.protocol = IPPROTO_TCP;
   hdr.len = htons(len);
   for (i = 0; i < sizeof(hdr); i += 2)
-    sum += *(u_short *)((char *)(&hdr) + i);
+	sum += *(u_short *)((char *)(&hdr) + i);
   
   return (ip_check_ext((u_short *)th, len, sum));
 }                     
@@ -297,7 +297,7 @@ my_udp_check(void *u, int len, u_int saddr, u_int daddr)
   struct psuedo_hdr hdr;
 
   if (dontchksum(saddr))
-  	return 0;
+	return 0;
   
   hdr.saddr = saddr;
   hdr.daddr = daddr;
@@ -305,7 +305,7 @@ my_udp_check(void *u, int len, u_int saddr, u_int daddr)
   hdr.protocol = IPPROTO_UDP;
   hdr.len = htons(len);
   for (i = 0; i < sizeof(hdr); i += 2)
-    sum += *(u_short *)((char *)(&hdr) + i);
+	sum += *(u_short *)((char *)(&hdr) + i);
   
   return (ip_check_ext((u_short *)u, len, sum));
 }                     

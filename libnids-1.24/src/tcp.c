@@ -752,7 +752,7 @@ process_tcp(u_char * data, int skblen)
 	if (!(a_tcp = find_stream(this_tcphdr, this_iphdr, &from_client))) {
 		if ((this_tcphdr->th_flags & TH_SYN) &&
 			!(this_tcphdr->th_flags & TH_ACK) &&
-			!(this_tcphdr->th_flags & TH_RST))
+			!(this_tcphdr->th_flags & TH_RST))		//这时一个握手的第一个包
 			add_new_tcp(this_tcphdr, this_iphdr);
 		return;
 	}
@@ -764,7 +764,7 @@ process_tcp(u_char * data, int skblen)
 		rcv = &a_tcp->client;
 		snd = &a_tcp->server;
 	}
-	if ((this_tcphdr->th_flags & TH_SYN)) {
+	if ((this_tcphdr->th_flags & TH_SYN)) {	//这个数据包是三次握手包中的第二个，(如果是其他情况，直接return)
 		if (from_client || a_tcp->client.state != TCP_SYN_SENT ||
 			a_tcp->server.state != TCP_CLOSE || !(this_tcphdr->th_flags & TH_ACK))
 			return;
@@ -800,11 +800,11 @@ process_tcp(u_char * data, int skblen)
 		&&
 		(!before(ntohl(this_tcphdr->th_seq), rcv->ack_seq + rcv->window*rcv->wscale) ||
 		before(ntohl(this_tcphdr->th_seq) + datalen, rcv->ack_seq)
-		)
-		)
+		)  //在接收窗口之外的数据包到达，直接丢弃。
+		)	
 		return;
 
-	if ((this_tcphdr->th_flags & TH_RST)) {
+	if ((this_tcphdr->th_flags & TH_RST)) {  //tcp连接重置
 		if (a_tcp->nids_state == NIDS_DATA) {
 			struct lurker_node *i;
 
@@ -823,7 +823,7 @@ process_tcp(u_char * data, int skblen)
 
 	if ((this_tcphdr->th_flags & TH_ACK)) {
 		if (from_client && a_tcp->client.state == TCP_SYN_SENT &&
-			a_tcp->server.state == TCP_SYN_RECV) {
+			a_tcp->server.state == TCP_SYN_RECV) {  //tcp3次握手的第三个包(客户端发送的ack)
 			if (ntohl(this_tcphdr->th_ack) == a_tcp->server.seq) {
 				a_tcp->client.state = TCP_ESTABLISHED;
 				a_tcp->client.ack_seq = ntohl(this_tcphdr->th_ack);
@@ -880,9 +880,9 @@ process_tcp(u_char * data, int skblen)
 		}
 	}
 	if ((this_tcphdr->th_flags & TH_ACK)) {
-		handle_ack(snd, ntohl(this_tcphdr->th_ack));
-		if (rcv->state == FIN_SENT)
-			rcv->state = FIN_CONFIRMED;
+		handle_ack(snd, ntohl(this_tcphdr->th_ack));  //处理握手确认
+		if (rcv->state == FIN_SENT)		//接收端已经完成了发送
+			rcv->state = FIN_CONFIRMED;	
 		if (rcv->state == FIN_CONFIRMED && snd->state == FIN_CONFIRMED) {
 			struct lurker_node *i;
 
